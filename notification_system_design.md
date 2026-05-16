@@ -374,4 +374,66 @@ This query finds students who have at least one Placement notification in the pa
 
 ---
 
-End of Stage 3 notes.
+## Stage 4 — Reducing database load
+
+As the system scales, the database can become a bottleneck. These simple methods help reduce load and keep responses fast.
+
+### Caching
+
+Caching stores often-used data in memory or a fast store so the system does not have to read the database every time.
+
+Advantages:
+- Faster responses for repeated reads.
+- Reduces database queries and CPU work.
+- Good for data that changes rarely, like notification templates or student profile lookups.
+
+Disadvantages:
+- Cached data can become stale if the database changes.
+- You must add logic to refresh or invalidate the cache.
+- It adds complexity and another layer to manage.
+
+### Pagination
+
+Pagination breaks large result sets into smaller pages instead of loading everything at once.
+
+Advantages:
+- Smaller, faster queries.
+- Less memory used on the server and client.
+- Better user experience when showing long lists.
+
+Disadvantages:
+- More complicated request logic for the client.
+- Offset-based pagination can still become slow for deep pages.
+- Requires design of page size and navigation.
+
+### WebSockets
+
+WebSockets let the server push notifications to connected users instead of clients polling the database again and again.
+
+Advantages:
+- Real-time updates with fewer repeated database checks.
+- Better experience for students receiving notifications instantly.
+- Reduces polling traffic and load.
+
+Disadvantages:
+- Requires stateful connections and more server resources.
+- Harder to scale across multiple servers without shared connection state.
+- Not every client or environment supports WebSockets equally.
+
+### Background jobs
+
+Background jobs move work that does not need an immediate response out of the main request path.
+
+Advantages:
+- Keeps API requests fast by handling heavy work asynchronously.
+- Great for batch notifications, digest emails, or analytics.
+- Reduces peak load on the database during user requests.
+
+Disadvantages:
+- More moving parts: worker processes, queues, and retries.
+- Harder to debug when jobs fail or take too long.
+- Results are not always instant if the job runs later.
+
+---
+
+End of Stage 4 notes.
