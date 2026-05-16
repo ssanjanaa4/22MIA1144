@@ -436,4 +436,85 @@ Disadvantages:
 
 ---
 
-End of Stage 4 notes.
+## Stage 5 — Sending notifications at scale
+
+When you need to send notifications to a very large audience, such as 50,000 students, sending them one by one from the main web process creates several problems.
+
+### Problems with sending all notifications one by one
+
+- Slow response: sending a lot of emails or notifications sequentially can take minutes or hours, which makes the system feel slow.
+- Resource spikes: the web server or database can become overwhelmed by many repeated writes and network calls.
+- Failure risk: if one send fails, it can block the rest or force the whole batch to restart.
+- Poor reliability: retries and backoff are hard to handle cleanly in a simple loop.
+
+### Retry mechanism if email fails
+
+A retry mechanism helps keep the system reliable when email delivery fails temporarily.
+
+Simple retry behavior:
+- Try sending the notification.
+- If it fails due to a transient error (timeout, SMTP issue), wait a short time and try again.
+- If it still fails after a few attempts, mark the notification as failed and log the error for later review.
+
+Advantages:
+- Improves delivery success for temporary failures.
+- Prevents a single failure from aborting the entire send batch.
+
+Disadvantages:
+- Adds complexity to job flow.
+- Requires careful limits to avoid infinite retry loops.
+- Can delay final status until retries complete.
+
+### Use of queues like RabbitMQ
+
+A queue is a buffer that stores work items until a worker is ready to process them.
+
+Why queues help:
+- Decouples the request that creates notifications from the work that actually sends them.
+- Allows many workers to consume messages in parallel.
+- Makes retries easier by moving failed jobs back into the queue or into a dead-letter queue.
+
+Advantages:
+- Better scalability: add more workers as load grows.
+- More resilient: transient failures do not crash the web process.
+- Easier monitoring: queue length shows work backlog.
+
+Disadvantages:
+- More infrastructure: you need to run RabbitMQ or another queue service.
+- More operational complexity: queue config, worker lifecycle, and visibility.
+- Needs careful design to avoid duplicate sends.
+
+### Simple pseudocode for scalable notification sending
+
+```pseudo
+function createNotificationBatch(studentIds, notificationData):
+  for each studentId in studentIds:
+    message = {
+      studentId: studentId,
+      notification: notificationData,
+      retries: 0
+    }
+    queue.publish('notification-send', message)
+
+worker process:
+  subscribe to 'notification-send'
+
+  on message received:
+    try:
+      sendEmail(message.studentId, message.notification)
+      updateNotificationStatus(message.studentId, 'sent')
+    catch error:
+      if message.retries < 3:
+        message.retries += 1
+        wait(2 ^ message.retries seconds)
+        queue.publish('notification-send', message)
+      else:
+        updateNotificationStatus(message.studentId, 'failed')
+        logError(error, message)
+```
+
+This design keeps sending work out of the main API, retries failed sends, and can scale by adding more workers.
+
+---
+
+End of Stage 5 notes.
