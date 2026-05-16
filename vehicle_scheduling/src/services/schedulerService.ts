@@ -1,4 +1,8 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env when available
+dotenv.config();
 
 /**
  * Basic types used by the scheduler. Real APIs may differ, so this
@@ -19,9 +23,58 @@ export type Vehicle = { id: string | number; depotId?: string | number; tasks?: 
 const DEPOTS_URL = 'http://4.224.186.213/evaluation-service/depots';
 const VEHICLES_URL = 'http://4.224.186.213/evaluation-service/vehicles';
 
+// Get API key from environment for authentication (required by the external API)
+const SCHEDULER_API_KEY = process.env.SCHEDULER_API_KEY || '';
+
+function assertSchedulerConfig() {
+  if (!SCHEDULER_API_KEY || SCHEDULER_API_KEY === 'your-api-key-here') {
+    const error: any = new Error('Missing SCHEDULER_API_KEY in vehicle_scheduling/.env');
+    error.status = 500;
+    throw error;
+  }
+
+  assertTokenNotExpired(SCHEDULER_API_KEY, 'SCHEDULER_API_KEY');
+}
+
+function assertTokenNotExpired(token: string, name: string) {
+  const [, payload] = token.split('.');
+  if (!payload) return;
+
+  try {
+    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    const exp = decoded.exp ?? decoded.MapClaims?.exp;
+    if (exp && Date.now() >= Number(exp) * 1000) {
+      const expiredAt = new Date(Number(exp) * 1000).toISOString();
+      const error: any = new Error(`${name} expired at ${expiredAt}; generate a fresh token`);
+      error.status = 500;
+      throw error;
+    }
+  } catch (error: any) {
+    if (error.status) throw error;
+  }
+}
+
+function toServiceError(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status ?? 502;
+    const detail = error.response?.data;
+    const message =
+      status === 401 || status === 403
+        ? 'Evaluation service rejected SCHEDULER_API_KEY'
+        : `Evaluation service request failed with status ${status}`;
+
+    const serviceError: any = new Error(message);
+    serviceError.status = status === 401 || status === 403 ? 502 : status;
+    serviceError.detail = detail;
+    return serviceError;
+  }
+
+  return error;
+}
+
 // Helper: normalize depot object to { id, mechanicHours }
 function normalizeDepot(raw: any): Depot {
-  const id = raw.depotId ?? raw.id ?? raw.DepotId ?? raw.DepotID;
+  const id = raw.depotId ?? raw.id ?? raw.ID ?? raw.DepotId ?? raw.DepotID;
   const mechanicHours =
     raw.MechanicHours ?? raw.mechanicHours ?? raw.mechanic_hours ?? raw.capacity ?? 8;
 
@@ -34,13 +87,13 @@ function collectTasksForDepot(depotId: any, vehicles: Vehicle[]): Task[] {
 
   vehicles.forEach((v: any) => {
     const vDepot = v.depotId ?? v.depotID ?? v.DepotId ?? v.depot ?? v.locationDepotId;
-    if (String(vDepot) !== String(depotId)) return;
+    if (vDepot !== undefined && String(vDepot) !== String(depotId)) return;
 
-    const rawTasks = v.tasks ?? v.vehicleTasks ?? v.tasksList ?? [];
+    const rawTasks = v.tasks ?? v.vehicleTasks ?? v.tasksList ?? [v];
     rawTasks.forEach((t: any, idx: number) => {
       const duration = Number(t.Duration ?? t.duration ?? t.time ?? 0);
       const impact = Number(t.Impact ?? t.impact ?? t.value ?? 0);
-      const id = t.id ?? t.taskId ?? `${v.id || 'vehicle'}-${idx}`;
+      const id = t.TaskID ?? t.id ?? t.taskId ?? `${v.id || 'vehicle'}-${idx}`;
 
       // Only include tasks with positive duration and impact
       if (!isNaN(duration) && !isNaN(impact) && duration > 0) {
@@ -92,14 +145,25 @@ function knapsack(items: Task[], capacity: number) {
 
 // Public: fetch remote data and produce schedule for all depots
 export async function buildSchedules() {
-  // Fetch depots and vehicles in parallel
-  const [depRes, vehRes] = await Promise.all([
-    axios.get(DEPOTS_URL),
-    axios.get(VEHICLES_URL),
-  ]);
+  assertSchedulerConfig();
 
-  const rawDepots = Array.isArray(depRes.data) ? depRes.data : depRes.data?.items ?? [];
-  const rawVehicles = Array.isArray(vehRes.data) ? vehRes.data : vehRes.data?.items ?? [];
+  // Build headers with Authorization if API key is provided.
+  const headers = SCHEDULER_API_KEY ? { Authorization: `Bearer ${SCHEDULER_API_KEY}` } : {};
+
+  let depRes;
+  let vehRes;
+  try {
+    // Fetch depots and vehicles in parallel
+    [depRes, vehRes] = await Promise.all([
+      axios.get(DEPOTS_URL, { headers }),
+      axios.get(VEHICLES_URL, { headers }),
+    ]);
+  } catch (error) {
+    throw toServiceError(error);
+  }
+
+  const rawDepots = Array.isArray(depRes.data) ? depRes.data : depRes.data?.depots ?? depRes.data?.items ?? [];
+  const rawVehicles = Array.isArray(vehRes.data) ? vehRes.data : vehRes.data?.vehicles ?? vehRes.data?.items ?? [];
 
   const depots = rawDepots.map(normalizeDepot);
   const vehicles = rawVehicles as Vehicle[];
