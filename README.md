@@ -49,6 +49,8 @@ The endpoint returns depot schedules with selected tasks, total duration, and to
 
 Observed result from local endpoint:
 
+![Vehicle scheduling endpoint result](assets/vehicle-endpoint-result.svg)
+
 ```json
 [
   {
@@ -128,6 +130,8 @@ GET http://localhost:3001/priority-inbox
 The endpoint returns the top unread notifications sorted by priority.
 
 Observed result from local browser:
+
+![Notification priority inbox endpoint result](assets/notification-endpoint-result.svg)
 
 ```json
 {

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="835" viewBox="0 0 980 835" role="img" aria-labelledby="title desc">
+  <title id="title">Vehicle scheduling endpoint result</title>
+  <desc id="desc">Pretty printed JSON sample returned by the vehicle scheduling endpoint.</desc>
+  <rect width="980" height="835" fill="#ffffff"/>
+  <rect x="1" y="1" width="978" height="833" rx="8" fill="#ffffff" stroke="#d9d9d9" stroke-width="2"/>
+  <text x="22" y="31" font-family="Consolas, 'Courier New', monospace" font-size="19" fill="#000000">
+    <tspan x="22" dy="0">[</tspan>
+    <tspan x="46" dy="36">{</tspan>
+    <tspan x="70" dy="36">"depotId": 1,</tspan>
+    <tspan x="70" dy="36">"selectedTasks": [</tspan>
+    <tspan x="94" dy="36">{</tspan>
+    <tspan x="118" dy="36">"id": "3c91cb6d-5ba8-40de-9e52-d4c11939d055",</tspan>
+    <tspan x="118" dy="36">"duration": 2,</tspan>
+    <tspan x="118" dy="36">"impact": 8,</tspan>
+    <tspan x="118" dy="36">"meta": {</tspan>
+    <tspan x="142" dy="36">"TaskID": "3c91cb6d-5ba8-40de-9e52-d4c11939d055",</tspan>
+    <tspan x="142" dy="36">"Duration": 2,</tspan>
+    <tspan x="142" dy="36">"Impact": 8</tspan>
+    <tspan x="118" dy="36">}</tspan>
+    <tspan x="94" dy="36">},</tspan>
+    <tspan x="94" dy="36">{</tspan>
+    <tspan x="118" dy="36">"id": "b5483b4d-db0a-4fdf-abef-6292be5635bc",</tspan>
+    <tspan x="118" dy="36">"duration": 4,</tspan>
+    <tspan x="118" dy="36">"impact": 7,</tspan>
+    <tspan x="118" dy="36">"meta": {</tspan>
+    <tspan x="142" dy="36">"TaskID": "b5483b4d-db0a-4fdf-abef-6292be5635bc",</tspan>
+    <tspan x="142" dy="36">"Duration": 4,</tspan>
+    <tspan x="142" dy="36">"Impact": 7</tspan>
+    <tspan x="118" dy="36">}</tspan>
+    <tspan x="94" dy="36">},</tspan>
+    <tspan x="94" dy="36">{</tspan>
+    <tspan x="118" dy="36">"id": "a9bbae16-284f-4939-b425-36947f5e4948",</tspan>
+    <tspan x="118" dy="36">"duration": 2,</tspan>
+    <tspan x="118" dy="36">"impact": 5,</tspan>
+    <tspan x="118" dy="36">"meta": {</tspan>
+    <tspan x="142" dy="36">"TaskID": "a9bbae16-284f-4939-b425-36947f5e4948",</tspan>
+  </text>
+</svg>

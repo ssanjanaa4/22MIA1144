@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1918" height="900" viewBox="0 0 1918 900" role="img" aria-labelledby="title desc">
+  <title id="title">Notification priority inbox endpoint result</title>
+  <desc id="desc">Pretty printed JSON sample returned by the notification priority inbox endpoint.</desc>
+  <rect width="1918" height="900" fill="#ffffff"/>
+  <rect x="1" y="1" width="1916" height="898" rx="8" fill="#ffffff" stroke="#d9d9d9" stroke-width="2"/>
+  <text x="6" y="42" font-family="Consolas, 'Courier New', monospace" font-size="20" fill="#000000">
+    <tspan x="6" dy="0">{</tspan>
+    <tspan x="30" dy="36">"notifications": [</tspan>
+    <tspan x="54" dy="36">{</tspan>
+    <tspan x="78" dy="36">"id": "5aeb1c71-d5da-4762-9abd-52d5901fc1c4",</tspan>
+    <tspan x="78" dy="36">"type": "Placement",</tspan>
+    <tspan x="78" dy="36">"title": "Placement",</tspan>
+    <tspan x="78" dy="36">"body": "Nvidia Corporation hiring",</tspan>
+    <tspan x="78" dy="36">"createdAt": "2026-05-16 11:27:08",</tspan>
+    <tspan x="78" dy="36">"read": false,</tspan>
+    <tspan x="78" dy="36">"score": 1778912028</tspan>
+    <tspan x="54" dy="36">},</tspan>
+    <tspan x="54" dy="36">{</tspan>
+    <tspan x="78" dy="36">"id": "09b81297-0cc7-45b0-9016-874aa85e5d0e",</tspan>
+    <tspan x="78" dy="36">"type": "Event",</tspan>
+    <tspan x="78" dy="36">"title": "Event",</tspan>
+    <tspan x="78" dy="36">"body": "cult-fest",</tspan>
+    <tspan x="78" dy="36">"createdAt": "2026-05-16 10:56:35",</tspan>
+    <tspan x="78" dy="36">"read": false,</tspan>
+    <tspan x="78" dy="36">"score": 1778909295</tspan>
+    <tspan x="54" dy="36">},</tspan>
+    <tspan x="54" dy="36">{</tspan>
+    <tspan x="78" dy="36">"id": "e533eff7-3a3f-4107-9843-502a48ffe584",</tspan>
+    <tspan x="78" dy="36">"type": "Placement",</tspan>
+    <tspan x="78" dy="36">"title": "Placement",</tspan>
+    <tspan x="78" dy="36">"body": "Marvell Technology Inc. hiring",</tspan>
+    <tspan x="78" dy="36">"createdAt": "2026-05-16 09:27:30",</tspan>
+    <tspan x="78" dy="36">"read": false,</tspan>
+    <tspan x="78" dy="36">"score": 1778904850</tspan>
+  </text>
+</svg>
