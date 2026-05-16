@@ -193,3 +193,125 @@ Notes for beginners:
 ---
 
 File: `notification_system_design.md`
+
+---
+
+## Stage 2 — Persistence with PostgreSQL
+
+In Stage 2 we add durable storage using PostgreSQL so notifications survive restarts, and we can query/filter them efficiently.
+
+### Why use a SQL database
+
+- Relational guarantees: PostgreSQL provides ACID transactions which help keep notification state consistent when multiple processes write or mark notifications as read.
+- Flexible querying: SQL is convenient for filtering, sorting, pagination, and joins (for example joining notifications to student profiles).
+- Battle-tested: PostgreSQL scales well for many use cases and has rich indexing, extensions, and tooling.
+
+### Simple table designs
+
+Below are minimal `CREATE TABLE` statements suitable for Stage 2. They omit advanced constraints and migrations for clarity.
+
+```sql
+-- Students table: a compact student record referenced by notifications
+CREATE TABLE students (
+  id UUID PRIMARY KEY,
+  student_id TEXT UNIQUE NOT NULL, -- application-level id (e.g. "student-123")
+  name TEXT,
+  email TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Notifications table: stores notifications per student
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT,
+  meta JSONB,
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  read_at TIMESTAMP WITH TIME ZONE NULL,
+  CONSTRAINT fk_student FOREIGN KEY (student_id) REFERENCES students (student_id) ON DELETE CASCADE
+);
+```
+
+Notes:
+- `meta` uses `JSONB` so flexible payloads (links, locations, extra fields) fit naturally.
+- `student_id` is stored as text to match the application identifier; you can instead use UUID foreign keys if you prefer strict relational IDs.
+
+### Basic indexing
+
+Start with these indexes to support typical queries:
+
+```sql
+-- Fetch by student and creation time (for listing most recent notifications)
+CREATE INDEX idx_notifications_student_created ON notifications (student_id, created_at DESC);
+
+-- Fetch unread quickly
+CREATE INDEX idx_notifications_student_unread ON notifications (student_id) WHERE read = false;
+
+-- If you'll query by type often
+CREATE INDEX idx_notifications_type ON notifications (type);
+```
+
+Why these help:
+- The combined `student_id, created_at` index supports fast ordered retrieval of a student's notifications (pagination & sorting).
+- The partial index on `read = false` is small and very fast for fetching only unread notifications.
+
+### How large data can slow queries
+
+- Full table scans: without appropriate indexes, queries that filter by `student_id` or `read` will scan many rows, causing slow responses.
+- Index bloat: indexes speed reads but consume space and slow writes; monitor and add only needed indexes.
+- Hot partitions: if one student has enormous amounts of notifications, queries and writes for that student can become slower; consider sharding by time or archiving old notifications.
+- Joins and JSONB: joining large tables or repeatedly querying deep JSON paths can be slower; use materialized/denormalized columns when necessary.
+
+### Example SQL queries
+
+1) Fetch latest notifications for a student (with optional pagination):
+
+```sql
+-- Fetch most recent 20 notifications for student-123
+SELECT id, type, title, body, meta, read, created_at, read_at
+FROM notifications
+WHERE student_id = 'student-123'
+ORDER BY created_at DESC
+LIMIT 20;
+```
+
+2) Fetch only unread notifications:
+
+```sql
+SELECT id, type, title, body, meta, created_at
+FROM notifications
+WHERE student_id = 'student-123' AND read = false
+ORDER BY created_at DESC;
+```
+
+3) Mark a notification as read (single notification):
+
+```sql
+UPDATE notifications
+SET read = true, read_at = now()
+WHERE id = 'notif-001'
+RETURNING id, read, read_at;
+```
+
+4) Mark all notifications for a student as read:
+
+```sql
+UPDATE notifications
+SET read = true, read_at = now()
+WHERE student_id = 'student-123' AND read = false;
+```
+
+---
+
+## Operational tips
+
+- Use connection pooling (e.g., `pg` + `pg-pool` or an ORM) to avoid opening too many DB connections.
+- Monitor slow queries with Postgres `pg_stat_statements` and add indexes selectively.
+- Archive or delete old notifications periodically if you expect extremely large volumes.
+
+---
+
+End of Stage 2 notes.
