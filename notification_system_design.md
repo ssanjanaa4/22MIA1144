@@ -315,3 +315,63 @@ WHERE student_id = 'student-123' AND read = false;
 ---
 
 End of Stage 2 notes.
+
+---
+
+## Stage 3 — Scaling query performance
+
+As the notification system grows, some queries can become slow if the data set is large or the indexes are not tuned.
+
+### Why an unread notification query can become slow
+
+A query like `SELECT ... FROM notifications WHERE student_id = 'student-123' AND read = false` can become slow when the `notifications` table holds many rows, especially if the database must examine a large fraction of them to find matching results.
+
+If the query can only use a full table scan or a poor index, every request may read many pages from disk rather than just the small subset needed for that student.
+
+### How indexes help
+
+Indexes act like a sorted lookup table for the database. An index on `(student_id, created_at DESC)` or a partial index on `(student_id) WHERE read = false` allows the database to find matching rows quickly without scanning the whole table.
+
+For example, a partial index on unread notifications lets Postgres skip every row where `read = true`, making the unread query much faster.
+
+### Why adding indexes on every column is not good
+
+Indexes are useful, but they are not free. Each index:
+
+- consumes disk space,
+- increases the work needed for inserts, updates, and deletes,
+- can slow write throughput if there are many indexes.
+
+That means adding an index for every possible column can hurt overall performance. The right approach is to add indexes only for columns and filters that your application actually queries often.
+
+### How pagination improves performance
+
+Pagination keeps queries small and fast by returning only a limited number of rows at a time. Instead of loading all notifications for a student in one request, you can fetch 20 or 50 at a time.
+
+A query like this is more efficient:
+
+```sql
+SELECT id, type, title, body, meta, read, created_at
+FROM notifications
+WHERE student_id = 'student-123'
+ORDER BY created_at DESC
+LIMIT 20
+OFFSET 0;
+```
+
+Using a cursor or keyset pagination pattern is even better for large result sets, because it avoids the cost of skipping rows with `OFFSET`.
+
+### Example query: students who received Placement notifications in the last 7 days
+
+```sql
+SELECT DISTINCT student_id
+FROM notifications
+WHERE type = 'Placement'
+  AND created_at >= now() - INTERVAL '7 days';
+```
+
+This query finds students who have at least one Placement notification in the past week.
+
+---
+
+End of Stage 3 notes.
