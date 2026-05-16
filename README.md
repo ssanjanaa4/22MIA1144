@@ -47,7 +47,7 @@ GET http://localhost:3000/schedule
 
 The endpoint returns depot schedules with selected tasks, total duration, and total impact.
 
-Example response shape:
+Observed result from local endpoint:
 
 ```json
 [
@@ -55,13 +55,55 @@ Example response shape:
     "depotId": 1,
     "selectedTasks": [
       {
-        "id": "1d0ab709-7a44-4436-8964-255d52308e5d",
-        "duration": 3,
-        "impact": 4
+        "id": "3c91cb6d-5ba8-40de-9e52-d4c11939d055",
+        "duration": 2,
+        "impact": 8,
+        "meta": {
+          "TaskID": "3c91cb6d-5ba8-40de-9e52-d4c11939d055",
+          "Duration": 2,
+          "Impact": 8
+        }
+      },
+      {
+        "id": "b5483b4d-db0a-4fdf-abef-6292be5635bc",
+        "duration": 4,
+        "impact": 7,
+        "meta": {
+          "TaskID": "b5483b4d-db0a-4fdf-abef-6292be5635bc",
+          "Duration": 4,
+          "Impact": 7
+        }
+      },
+      {
+        "id": "a9bbae16-284f-4939-b425-36947f5e4948",
+        "duration": 2,
+        "impact": 5,
+        "meta": {
+          "TaskID": "a9bbae16-284f-4939-b425-36947f5e4948",
+          "Duration": 2,
+          "Impact": 5
+        }
       }
     ],
     "totalDuration": 60,
-    "totalImpact": 147
+    "totalImpact": 132
+  },
+  {
+    "depotId": 2,
+    "selectedTasks": [
+      {
+        "id": "eef0e2dc-d76e-4717-8d44-bc0a4cacc964",
+        "duration": 8,
+        "impact": 4
+      },
+      {
+        "id": "270a5b23-d53d-4a96-bd18-2697c3ce06bf",
+        "duration": 1,
+        "impact": 10
+      }
+    ],
+    "totalDuration": 135,
+    "totalImpact": 198
   }
 ]
 ```
