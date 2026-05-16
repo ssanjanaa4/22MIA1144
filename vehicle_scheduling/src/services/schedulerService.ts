@@ -104,7 +104,7 @@ export async function buildSchedules() {
   const depots = rawDepots.map(normalizeDepot);
   const vehicles = rawVehicles as Vehicle[];
 
-  const schedules = depots.map((d) => {
+  const schedules = depots.map((d: Depot) => {
     const tasks = collectTasksForDepot(d.id, vehicles as any[]);
     const { selected, totalImpact, totalDuration } = knapsack(tasks, d.mechanicHours);
 
